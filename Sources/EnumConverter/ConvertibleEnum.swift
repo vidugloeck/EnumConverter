@@ -34,7 +34,7 @@ class ConvertibleEnum {
                     for c in cases {
                         $0.addMember(
                             MemberDeclListItemSyntax {
-                                $0.useDecl(c.convert(enumName: name, enumProperties: properties).eraseToDeclSyntax()
+                                $0.useDecl(c.convert(enumName: name, enumType: name, enumProperties: properties).eraseToDeclSyntax()
                                             .withLeadingTrivia(.newlines(cases.first! == c ? 1 : 0))
                                             .withTrailingTrivia(.newlines(1)))
                             }
@@ -108,23 +108,31 @@ extension ConvertibleEnum {
     
     struct Case: Equatable {
         
-        var name: String = ""
-        var enumName: String = ""
-        var parameterClause: ParameterClauseSyntax? = nil
-        var associatedTypes: [AssociatedType] = []
+        var name: String
+        var parameterClause: ParameterClauseSyntax?
+        var associatedTypes: [AssociatedType]
         
-        init(name: String, parameterClause: ParameterClauseSyntax? = nil, associatedTypes: [ConvertibleEnum.Case.AssociatedType]) {
-            self.name = name
-            self.parameterClause = parameterClause
-            self.associatedTypes = associatedTypes
-        }
-        
-        init(name: String) {
-            self.name = name
-        }
-        
-        func convert(enumName: String, enumProperties: [Property]) -> DeclSyntax {
-            VariableDeclSyntax {
+        func convert(enumName: String, enumType: String, enumProperties: [Property]) -> DeclSyntax {
+            if let parameterClause = parameterClause {
+                return FunctionDeclSyntax {
+                    $0.addModifier(DeclModifierSyntax { $0.useName(SF.makeStaticKeyword(trailingTrivia: .spaces(1))) } )
+                    $0.useFuncKeyword(SF.makeFuncKeyword(trailingTrivia: .spaces(1)))
+                    $0.useIdentifier(SF.makeIdentifier(name))
+                    $0.useSignature(
+                        FunctionSignatureSyntax {
+                            $0.useInput(parameterClause.withTrailingTrivia(.spaces(1)))
+                            $0.useOutput(
+                                ReturnClauseSyntax {
+                                    $0.useArrow(SF.makeArrowToken(trailingTrivia: .spaces(1)))
+                                    $0.useReturnType(SF.makeTypeIdentifier(enumType, trailingTrivia: .spaces(1)))
+                                }
+                            )
+                        }
+                    )
+                    $0.useBody(Self.body(caseName: name, enumProperties: enumProperties))
+                }.eraseToDeclSyntax()
+            }
+            return VariableDeclSyntax {
                 $0.addModifier(DeclModifierSyntax { $0.useName(SF.makeStaticKeyword(trailingTrivia: .spaces(1))) } )
                 $0.useLetOrVarKeyword(SF.makeVarKeyword(trailingTrivia: .spaces(1)))
                 $0.addBinding(PatternBindingSyntax {
@@ -132,32 +140,37 @@ extension ConvertibleEnum {
                     $0.useTypeAnnotation(SF.makeTypeAnnotation(colon: SF.makeColonToken(trailingTrivia: .spaces(1)),
                                                                type: SF.makeTypeIdentifier(enumName, trailingTrivia: .spaces(1))))
                     $0.useAccessor(
-                        CodeBlockSyntax {
-                            $0.useLeftBrace(SF.makeLeftBraceToken(trailingTrivia: .newlines(1)))
-                            $0.addStatement(
-                                ReturnStmtSyntax {
-                                    $0.useReturnKeyword(SF.makeReturnKeyword(trailingTrivia: .spaces(1)))
-                                    $0.useExpression(
-                                        FunctionCallExprSyntax {
-                                            $0.useCalledExpression(SF.makeMemberAccessExpr(base: nil, dot: SF.makePeriodToken(), name: SF.makeInitKeyword(), declNameArguments: nil).eraseToExprSyntax())
-                                            $0.useLeftParen(SF.makeLeftParenToken())
-                                            for p in enumProperties {
-                                                $0.addArgument(p.convertToTupleExpression(caseName: name, useTrailingComma: enumProperties.last! != p))
-                                            }
-                                            $0.useRightParen(SF.makeRightParenToken())
-                                        }.eraseToExprSyntax()
-                                    )
-                                }.wrapInCodeBlockItem()
-                            )
-                            $0.useRightBrace(SF.makeRightBraceToken(leadingTrivia: .newlines(1)))
-                        }.eraseToSyntax()
+                        Self.body(caseName: name, enumProperties: enumProperties).eraseToSyntax()
                     )
                 }
                 )
             }.eraseToDeclSyntax()
         }
+        
+        static func body(caseName: String, enumProperties: [Property]) -> CodeBlockSyntax {
+            CodeBlockSyntax {
+                $0.useLeftBrace(SF.makeLeftBraceToken(trailingTrivia: .newlines(1)))
+                $0.addStatement(
+                    ReturnStmtSyntax {
+                        $0.useReturnKeyword(SF.makeReturnKeyword(trailingTrivia: .spaces(1)))
+                        $0.useExpression(
+                            FunctionCallExprSyntax {
+                                $0.useCalledExpression(SF.makeMemberAccessExpr(base: nil, dot: SF.makePeriodToken(), name: SF.makeInitKeyword(), declNameArguments: nil).eraseToExprSyntax())
+                                $0.useLeftParen(SF.makeLeftParenToken())
+                                for p in enumProperties {
+                                    $0.addArgument(p.convertToTupleExpression(caseName: caseName, useTrailingComma: enumProperties.last! != p))
+                                }
+                                $0.useRightParen(SF.makeRightParenToken())
+                            }.eraseToExprSyntax()
+                        )
+                    }.wrapInCodeBlockItem()
+                )
+                $0.useRightBrace(SF.makeRightBraceToken(leadingTrivia: .newlines(1)))
+            }
+        }
     }
 }
+
 /// functionParameters
 //for v in associatedTypes {
 //    $0.addArgument(SF.makeTupleExprElement(label: SF.makeIdentifier(v.name),

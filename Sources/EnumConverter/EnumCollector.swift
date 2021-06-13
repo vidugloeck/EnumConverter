@@ -10,15 +10,17 @@ class EnumCollector: SyntaxVisitor {
         return .visitChildren
     }
     
-    override func visit(_ node: CaseItemSyntax) -> SyntaxVisitorContinueKind {
-        guard let caseExpression = node.descendant(where: { MemberAccessExprSyntax($0) }) else {
-            fatalError("Expected MemberAccessExpression here :-/")
-        }
-        convertible.cases.append(.init(name: caseExpression.name.text))
-        
+    //Called when enum case is defined
+    override func visit(_ node: EnumCaseElementSyntax) -> SyntaxVisitorContinueKind  {
+        convertible.cases.append(
+            .init(name: node.identifier.text,
+                  parameterClause: node.associatedValue,
+                  associatedTypes: [])
+        )
         return .visitChildren
     }
     
+    // Called when enum properties are defined
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
         guard let patternBinding = node.descendant(where: { PatternBindingSyntax($0) }) else { return .skipChildren }
         guard let switchStmt = node.descendant(where: { SwitchStmtSyntax($0) }) else { return .skipChildren }

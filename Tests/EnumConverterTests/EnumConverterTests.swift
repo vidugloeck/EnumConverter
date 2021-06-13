@@ -6,11 +6,14 @@ final class EnumConverterTests: XCTestCase {
         let source = """
         enum Test {
         case beginner
-
+        case normal(text: String)
+        
         var text: String {
         switch self {
         case .beginner:
         return "a beginner"
+        case .normal(let text):
+        return text
         }
         }
         }
@@ -23,10 +26,13 @@ final class EnumConverterTests: XCTestCase {
         
         let expected = """
         struct Test {
-        var text: String
+        let text: String
         
         static var beginner: Test {
         return .init(text: "a beginner")
+        }
+        static func normal(text: String) -> Test {
+        return .init(text: text)
         }
         }
         
