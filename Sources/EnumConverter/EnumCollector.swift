@@ -14,8 +14,7 @@ class EnumCollector: SyntaxVisitor {
     override func visit(_ node: EnumCaseElementSyntax) -> SyntaxVisitorContinueKind  {
         convertible.cases.append(
             .init(name: node.identifier.text,
-                  parameterClause: node.associatedValue,
-                  associatedTypes: [])
+                  parameterClause: node.associatedValue)
         )
         return .visitChildren
     }

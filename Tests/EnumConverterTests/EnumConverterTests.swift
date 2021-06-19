@@ -7,6 +7,7 @@ final class EnumConverterTests: XCTestCase {
         enum Test {
         case beginner
         case normal(text: String)
+        case pro(String)
         
         var text: String {
         switch self {
@@ -14,6 +15,8 @@ final class EnumConverterTests: XCTestCase {
         return "a beginner"
         case .normal(let text):
         return text
+        case .pro(let value):
+        return value
         }
         }
         }
@@ -34,30 +37,13 @@ final class EnumConverterTests: XCTestCase {
         static func normal(text: String) -> Test {
         return .init(text: text)
         }
+        static func pro(value0: String) -> Test {
+        return .init(text: value0)
+        }
         }
         
         """
         
         assertEqual(expected: expected, actual: result.description)
     }
-}
-
-var maxExpected: String {
-    """
-        struct Test {
-        var text: String
-        }
-        
-        extension Test {
-        static var beginner: Test {
-        .init(text: "beginner")
-        }
-        static func normal(text: String) -> Test {
-        .init(text: text)
-        }
-        static func advanced(custom: String) -> Test {
-        .init(text: custom)
-        }
-        }
-        """
 }
