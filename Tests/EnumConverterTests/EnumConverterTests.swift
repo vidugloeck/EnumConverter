@@ -1,8 +1,8 @@
 import XCTest
-@testable import EnumConverter
+import EnumConverter
 import SwiftSyntax
 final class EnumConverterTests: XCTestCase {
-    func testEnumSourceToConvertibleEnum() {
+    func testEnumConversionFromString() throws {
         let source = #"""
             enum Test {
             case beginner
@@ -33,10 +33,7 @@ final class EnumConverterTests: XCTestCase {
             }
         """#
         
-        let sourceFile = try! SyntaxParser.parse(source: source)
-        let collector = EnumCollector()
-        collector.walk(sourceFile)
-        let result = collector.convertible.convert()
+        let result = try EnumConverter.convertEnumToStruct(from: source)
         
         let expected = #"""
         struct Test {
@@ -57,5 +54,30 @@ final class EnumConverterTests: XCTestCase {
         """#
         
         assertEqual(expected: expected, actual: result.description)
+    }
+    
+    func testEnumConversionFromURL() throws  {
+        let sourceURL = """
+        enum Test {
+        case a
+        case b
+        }
+        """.writeToTempURL()
+        let result = try EnumConverter.convertEnumToStruct(from: sourceURL)
+        
+        let expected = """
+        struct Test {
+        
+        static var a: Test {
+        return .init()
+        }
+        static var b: Test {
+        return .init()
+        }
+        }
+        
+        """
+        
+        assertEqual(expected: expected, actual: result)
     }
 }

@@ -1,18 +1,6 @@
 import Foundation
 import SwiftSyntax
 
-func createTempFileURL() -> URL {
-    let caches = try! FileManager.default.url(for: .cachesDirectory,
-                                              in: .userDomainMask,
-                                              appropriateFor: nil,
-                                              create: false)
-    
-    let tempFileName = ProcessInfo().globallyUniqueString
-    
-    return caches.appendingPathComponent(tempFileName)
-    
-}
-
 extension StringProtocol {
     
     var trimmed: String {
@@ -24,14 +12,7 @@ extension StringProtocol {
 
 extension String {
     func syntax() -> SourceFileSyntax {
-        let url = writeToTempURL()
-        return try! SyntaxParser.parse(url)
-    }
-    
-    private func writeToTempURL() -> URL  {
-        let url = createTempFileURL()
-        try! self.data(using: .utf8)?.write(to: url, options: .atomic)
-        return url
+        return try! SyntaxParser.parse(source: self)
     }
     
     /// Trims `#>` and `<#` characters

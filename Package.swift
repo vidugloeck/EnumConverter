@@ -23,6 +23,7 @@ let package = Package(
             dependencies: ["SwiftSyntax"]),
         .testTarget(
             name: "EnumConverterTests",
-            dependencies: ["EnumConverter"]),
+            dependencies: ["EnumConverter"],
+            resources: [.copy("Resources")]),
     ]
 )

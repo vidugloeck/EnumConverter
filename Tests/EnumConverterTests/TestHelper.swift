@@ -120,3 +120,24 @@ extension String {
         return indentation + self.replacingOccurrences(of: "\n", with: "\n\(indentation)")
     }
 }
+
+
+func createTempFileURL() -> URL {
+    let caches = try! FileManager.default.url(for: .cachesDirectory,
+                                              in: .userDomainMask,
+                                              appropriateFor: nil,
+                                              create: false)
+    
+    let tempFileName = ProcessInfo().globallyUniqueString
+    
+    return caches.appendingPathComponent(tempFileName)
+    
+}
+
+extension String {
+    func writeToTempURL() -> URL  {
+        let url = createTempFileURL()
+        try! self.data(using: .utf8)?.write(to: url, options: .atomic)
+        return url
+    }
+}
