@@ -145,7 +145,7 @@ extension ConvertibleEnum {
                             $0.useInput(ParameterClauseSyntax {
                                 $0.useLeftParen(SF.makeLeftParenToken())
                                 for (index, item) in associatedTypes.enumerated() {
-                                    $0.addParameter(item.convert(index))
+                                    $0.addParameter(item.convert(index, useTrailingComma: item != associatedTypes.last))
                                 }
                                 $0.useRightParen(SF.makeRightParenToken(trailingTrivia: .spaces(1)))
                             })
@@ -211,11 +211,14 @@ extension ConvertibleEnum.Case {
         let name: String?
         let type: String
         
-        func convert(_ index: Int) -> FunctionParameterSyntax {
+        func convert(_ index: Int, useTrailingComma: Bool) -> FunctionParameterSyntax {
             FunctionParameterSyntax {
                 $0.useFirstName(SF.makeIdentifier(name ?? "value\(index)"))
                 $0.useColon(SF.makeColonToken(trailingTrivia: .spaces(1)))
                 $0.useType(SF.makeTypeIdentifier(type))
+                if useTrailingComma {
+                    $0.useTrailingComma(SF.makeCommaToken(trailingTrivia: .spaces(1)))
+                }
             }
         }
     }
