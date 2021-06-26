@@ -8,7 +8,9 @@ final class EnumConverterTests: XCTestCase {
             case beginner
             case normal(text: String, number: Int)
             case pro(String, Int)
+            }
             
+            extension Test {
             var text: String {
             switch self {
             case .beginner:
